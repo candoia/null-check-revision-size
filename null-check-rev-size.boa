@@ -1,0 +1,65 @@
+DEVs: output sum[string] of int;
+p: Project = input;
+isfixing := false;
+bugfix := false;
+nullFixing := false;
+count := 0;
+filesInRev:=0;
+files: map[string] of ChangedFile;
+isBugFixing := function(commitlog: string, issueRecord: set of string): bool{
+    lst := getAsArray(issueRecord);
+    foreach(i: int; def(lst[i])){
+        if(strfind(lst[i], commitlog) > -1){
+            return true;
+        }
+    }
+    return false;
+};
+issues: set of string;
+visit(p, visitor {
+    before node: Issue -> {
+          add(issues, node.number);
+        }
+});
+visit(p, visitor {
+	before node: Revision -> {
+        comment := node.log;
+        isfixing = isfixingrevision(comment);
+        bugfix= isBugFixing(comment, issues);
+    }
+	before node: ChangedFile -> {
+		if (isfixing && haskey(files, node.name)) {
+			count = 0;
+			visit(getast(files[node.name]));
+			last := count;
+			count = 0;
+			visit(getast(node));
+			if (count > last){
+              nullFixing = true;
+              filesInRev = filesInRev+1;
+            }
+
+		}
+		if (node.change == ChangeKind.DELETED)
+			remove(files, node.name);
+		else
+			files[node.name] = node;
+		stop;
+	}
+	after node : Revision -> {
+      if(nullFixing){
+        time := formattime("%c", node.commit_date);
+	    DEVs[time] << filesInRev;
+      }
+	  nullFixing = false;
+      filesInRev = 0;
+	}
+	before node: Statement ->
+		if (node.kind == StatementKind.IF)
+			visit(node.expression, visitor {
+				before node: Expression ->
+					if (node.kind == ExpressionKind.EQ || node.kind == ExpressionKind.NEQ)
+						exists (i: int; isliteral(node.expressions[i], "null"))
+							count++;
+			});
+});

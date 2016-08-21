@@ -1,0 +1,16 @@
+{
+  "name": "null-check-revs-szie",
+  "productName": "Null Check Revs Size",
+  "version": "0.1.1",
+  "author": "Nitin Mukesh Tiwari <nmtiwari@iastate.edu>",
+  "description": "Displays the revision date and size of null check files in the revision.",
+  "main": "main.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/candoia/null-check-rev-size"
+  },
+  "icon": {
+  	"type": "fa",
+  	"name": "pie-chart"
+  }
+}
